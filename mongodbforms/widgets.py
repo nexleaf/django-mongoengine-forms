@@ -3,6 +3,7 @@ import copy
 from django.forms.widgets import (Widget, Media, TextInput, FileInput,
                                   SplitDateTimeWidget, DateInput, TimeInput,
                                   MultiWidget, HiddenInput, CheckboxInput)
+from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.core.validators import EMPTY_VALUES
 from django.forms.util import flatatt
@@ -59,6 +60,8 @@ class BaseContainerWidget(Widget):
 
 
 class ListWidget(BaseContainerWidget):
+    template = "mongodbforms/list_widget.html"
+
     def render(self, name, value, attrs=None):
         if value is not None and not isinstance(value, (list, tuple)):
             raise TypeError(
@@ -77,6 +80,16 @@ class ListWidget(BaseContainerWidget):
                 name + '_%s' % i, widget_value, final_attrs)
             )
         return mark_safe(self.format_output(output))
+
+    def format_output(self, rendered_widgets):
+        """
+        Given a list of rendered widgets (as strings), returns a Unicode string
+        representing the HTML for the whole lot.
+
+        This hook allows you to format the HTML design of the widgets, if
+        needed.
+        """
+        return render_to_string(self.template, {"widgets": rendered_widgets})
 
     def value_from_datadict(self, data, files, name):
         widget = self.data_widget
