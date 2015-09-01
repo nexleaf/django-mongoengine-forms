@@ -124,8 +124,11 @@ def construct_instance(form, instance, fields=None, exclude=None):
                     to_delete = False
 
                 if to_delete:
-                    list_field[i].delete()
-                    idx_to_pop.append(i)
+                    try:
+                        list_field[i].delete()
+                        idx_to_pop.append(i)
+                    except IndexError:  # tried to remove something that is not in the list
+                        pass
                     continue
 
                 if uploaded_file is None:
@@ -143,6 +146,7 @@ def construct_instance(form, instance, fields=None, exclude=None):
 
             for idx in reversed(idx_to_pop):
                 list_field.pop(idx)
+                
             setattr(instance, f.name, list_field)
         else:
             field = getattr(instance, f.name)
