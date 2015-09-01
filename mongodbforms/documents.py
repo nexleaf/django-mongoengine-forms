@@ -125,7 +125,7 @@ def construct_instance(form, instance, fields=None, exclude=None):
 
                 if to_delete:
                     list_field[i].delete()
-                    ids_to_pop.append(i)
+                    idx_to_pop.append(i)
                     continue
 
                 if uploaded_file is None:
