@@ -1,6 +1,6 @@
 import copy
 
-from django.forms.widgets import (Widget, Media, TextInput,
+from django.forms.widgets import (Widget, Media, TextInput, FileInput,
                                   SplitDateTimeWidget, DateInput, TimeInput,
                                   MultiWidget, HiddenInput)
 from django.utils.safestring import mark_safe
@@ -176,3 +176,16 @@ class HiddenMapWidget(MapWidget):
         data_widget = HiddenInput()
         super(MapWidget, self).__init__(data_widget, attrs)
         self.key_widget = HiddenInput()
+
+
+class DeletableFileWidget(MultiWidget):
+
+    def __init__(self, attrs=None):
+        widgets = [FileInput, CheckboxInput]
+        super(DeletableFileWidget, self).__init__(widgets, attrs)
+
+
+class ListOfFilesWidget(ListWidget):
+
+    def __init__(self, attrs=None):
+        super(ListOfFilesWidget, self).__init__(DeletableFileWidget, attrs)
