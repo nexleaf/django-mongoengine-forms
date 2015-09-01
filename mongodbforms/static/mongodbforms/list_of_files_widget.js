@@ -17,13 +17,13 @@ $(document).ready(function() {
     itemTemplate = itemTemplate.replace(lastItemId + "0", newItemId + "0");
     itemTemplate = itemTemplate.replace(lastItemId + "1", newItemId + "1");
 
-    var $lastItem = $(".js-widget-last-item");
+    var $lastItem;
 
     function addNewItem () {
         var $item = $(itemTemplate.replace(/\{count\}/g, count));
         count += 1;
         $item.insertAfter($lastItem);
-        $lastItem.removeClass(".js-widget-last-item");
+        $lastItem.removeClass("js-widget-last-item");
         stopListening($lastItem);
         $lastItem = $item;
         startListening($lastItem);
@@ -43,5 +43,6 @@ $(document).ready(function() {
         }
     }
 
+    $lastItem = $(".js-widget-last-item");
     startListening($lastItem);
 });
