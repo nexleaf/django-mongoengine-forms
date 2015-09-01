@@ -193,8 +193,11 @@ class HiddenMapWidget(MapWidget):
 
 class DeletableFileWidget(MultiWidget):
 
-    def __init__(self, file_widget=FileInput, attrs=None):
+    default_delete_label = "Delete this file."
+
+    def __init__(self, file_widget=FileInput, attrs=None, delete_label=None):
         widgets = [file_widget, CheckboxInput]
+        self.delete_label = delete_label or self.default_delete_label
         super(DeletableFileWidget, self).__init__(widgets, attrs)
 
     def decompress(self, value):
@@ -206,11 +209,15 @@ class DeletableFileWidget(MultiWidget):
             return None
         return super(DeletableFileWidget, self).value_from_datadict(data, files, name)
 
+    def format_output(self, rendered_widgets):
+        label = "<label>%s</label>" % self.delete_label
+        return super(DeletableFileWidget, self).format_output(rendered_widgets) + label
+
 
 class ListOfFilesWidget(ListWidget):
 
-    def __init__(self, contained_widget=None, attrs=None):
-        super(ListOfFilesWidget, self).__init__(DeletableFileWidget(contained_widget, attrs), attrs)
+    def __init__(self, contained_widget=None, attrs=None, delete_label=None):
+        super(ListOfFilesWidget, self).__init__(DeletableFileWidget(contained_widget, attrs, delete_label), attrs)
 
     def value_from_datadict(self, data, files, name):
         widget = self.data_widget
