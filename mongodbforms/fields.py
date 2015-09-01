@@ -404,29 +404,27 @@ class ListOfFilesField(ListField):
     widget = ListOfFilesWidget
 
     def clean(self, value):
+        """
+        We clean every subwidget.
+        """
         clean_data = []
         errors = ErrorList()
-        if not value or isinstance(value, (list, tuple)):
-            if not value or not [
-                    v for v in value if v not in self.empty_values
-            ]:
-                if self.required:
-                    raise ValidationError(self.error_messages['required'])
-                else:
-                    return []
-            if not isinstance(value[0], (list, tuple)):
-                raise ValidationError(self.error_messages['invalid'])
-        else:
+        is_empty = not value or not [v for v in value if v not in self.empty_values]
+        if is_empty and not self.required:
+            return []
+
+        if is_empty and self.required:
+            raise ValidationError(self.error_messages['required'])
+
+        if value and not isinstance(value, (list, tuple)):
             raise ValidationError(self.error_messages['invalid'])
 
         for field_value, checkbox_value in value:
             try:
                 clean_data.append([self.contained_field.clean(field_value), checkbox_value])
             except ValidationError as e:
-                # Collect all validation errors in a single list, which we'll
-                # raise at the end of clean(), rather than raising a single
-                # exception for the first error we encounter.
                 errors.extend(e.messages)
+            # FIXME: copy paste from above
             if self.contained_field.required:
                 self.contained_field.required = False
         if errors:
