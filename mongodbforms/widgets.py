@@ -188,7 +188,8 @@ class DeletableFileWidget(MultiWidget):
         return [value, False]
 
     def value_from_datadict(self, data, files, name):
-        if not (name + '_0') in data or not (name + '_0') in files:
+        filename = name + '_0'
+        if filename not in data and filename not in files:
             return None
         return super(DeletableFileWidget, self).value_from_datadict(data, files, name)
 
