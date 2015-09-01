@@ -31,7 +31,7 @@ setup(name='mongodbforms',
     long_description=convert_readme(),
     include_package_data=True,
     package_data={
-        "mongodbforms": ['templates/mongodbforms/*', 'static/*']
+        "mongodbforms": ['templates/mongodbforms/*', 'static/mongodbforms/*']
     },
     zip_safe=False,
     install_requires=['setuptools', 'django>=1.4', 'mongoengine>=0.8.3',],
