@@ -184,6 +184,9 @@ class DeletableFileWidget(MultiWidget):
         widgets = [file_widget, CheckboxInput]
         super(DeletableFileWidget, self).__init__(widgets, attrs)
 
+    def decompress(self, value):
+        return [value, False]
+
 
 class ListOfFilesWidget(ListWidget):
 
