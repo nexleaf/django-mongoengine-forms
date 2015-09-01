@@ -180,12 +180,12 @@ class HiddenMapWidget(MapWidget):
 
 class DeletableFileWidget(MultiWidget):
 
-    def __init__(self, attrs=None):
-        widgets = [FileInput, CheckboxInput]
+    def __init__(self, file_widget=FileInput, attrs=None):
+        widgets = [file_widget, CheckboxInput]
         super(DeletableFileWidget, self).__init__(widgets, attrs)
 
 
 class ListOfFilesWidget(ListWidget):
 
-    def __init__(self, attrs=None):
-        super(ListOfFilesWidget, self).__init__(DeletableFileWidget, attrs)
+    def __init__(self, file_widget=None, attrs=None):
+        super(ListOfFilesWidget, self).__init__(DeletableFileWidget(file_widget, attrs), attrs)
