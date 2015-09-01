@@ -215,6 +215,10 @@ class DeletableFileWidget(MultiWidget):
 
 
 class ListOfFilesWidget(ListWidget):
+    template = "mongodbforms/list_of_files_widget.html"
+
+    class Media:
+        js = ('list_of_files_widget.js', )
 
     def __init__(self, contained_widget=None, attrs=None, delete_label=None):
         super(ListOfFilesWidget, self).__init__(DeletableFileWidget(contained_widget, attrs, delete_label), attrs)
