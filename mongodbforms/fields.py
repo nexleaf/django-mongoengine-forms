@@ -32,7 +32,7 @@ try:  # objectid was moved into bson in pymongo 1.9
 except ImportError:
     from pymongo.errors import InvalidId
     
-from mongodbforms.widgets import ListWidget, MapWidget, HiddenMapWidget
+from mongodbforms.widgets import ListWidget, MapWidget, HiddenMapWidget, ListOfFilesWidget
 
 
 class MongoChoiceIterator(object):
@@ -398,3 +398,38 @@ class MapField(forms.Field):
             if self.contained_field._has_changed(init_val, v):
                 return True
         return False
+
+
+class ListOfFilesField(ListField):
+    widget = ListOfFilesWidget
+
+    def clean(self, value):
+        """
+        We clean every subwidget.
+        """
+        clean_data = []
+        errors = ErrorList()
+        is_empty = not value or not [v for v in value if v not in self.empty_values]
+        if is_empty and not self.required:
+            return []
+
+        if is_empty and self.required:
+            raise ValidationError(self.error_messages['required'])
+
+        if value and not isinstance(value, (list, tuple)):
+            raise ValidationError(self.error_messages['invalid'])
+
+        for field_value, checkbox_value in value:
+            try:
+                clean_data.append([self.contained_field.clean(field_value), checkbox_value])
+            except ValidationError as e:
+                errors.extend(e.messages)
+            # FIXME: copy paste from above
+            if self.contained_field.required:
+                self.contained_field.required = False
+        if errors:
+            raise ValidationError(errors)
+
+        self.validate(clean_data)
+        self.run_validators(clean_data)
+        return clean_data

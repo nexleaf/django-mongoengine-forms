@@ -116,7 +116,21 @@ def construct_instance(form, instance, fields=None, exclude=None):
         elif isinstance(f, ListField):
             list_field = getattr(instance, f.name)
             uploads = cleaned_data[f.name]
+            idx_to_pop = []
             for i, uploaded_file in enumerate(uploads):
+                if isinstance(uploaded_file, list):  # ListOfFilesWidget
+                    uploaded_file, to_delete = uploaded_file
+                    if to_delete:
+                        try:
+                            list_field[i].delete()
+                            idx_to_pop.append(i)
+                        except IndexError:
+                            # someone checked the delete box of the last
+                            # form item, which obviously doesnt exist
+                            # on the list
+                            pass
+                        continue
+
                 if uploaded_file is None:
                     continue
                 try:
@@ -129,6 +143,10 @@ def construct_instance(form, instance, fields=None, exclude=None):
                     list_field[i] = file_obj
                 except IndexError:
                     list_field.append(file_obj)
+
+            for idx in reversed(idx_to_pop):
+                del list_field[idx]
+
             setattr(instance, f.name, list_field)
         else:
             field = getattr(instance, f.name)
