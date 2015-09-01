@@ -187,8 +187,24 @@ class DeletableFileWidget(MultiWidget):
     def decompress(self, value):
         return [value, False]
 
+    def value_from_datadict(self, data, files, name):
+        if not (name + '_0') in data or not (name + '_0') in files:
+            return None
+        return super(DeletableFileWidget, self).value_from_datadict(data, files, name)
+
 
 class ListOfFilesWidget(ListWidget):
 
     def __init__(self, contained_widget=None, attrs=None):
         super(ListOfFilesWidget, self).__init__(DeletableFileWidget(contained_widget, attrs), attrs)
+
+    def value_from_datadict(self, data, files, name):
+        widget = self.data_widget
+        i = 0
+        ret = []
+        value = widget.value_from_datadict(data, files, name + '_%s' % i)
+        while value is not None:
+            ret.append(value)
+            i = i + 1
+            value = widget.value_from_datadict(data, files, name + '_%s' % i)
+        return ret
