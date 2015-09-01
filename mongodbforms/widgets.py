@@ -190,5 +190,5 @@ class DeletableFileWidget(MultiWidget):
 
 class ListOfFilesWidget(ListWidget):
 
-    def __init__(self, file_widget=None, attrs=None):
-        super(ListOfFilesWidget, self).__init__(DeletableFileWidget(file_widget, attrs), attrs)
+    def __init__(self, contained_widget=None, attrs=None):
+        super(ListOfFilesWidget, self).__init__(DeletableFileWidget(contained_widget, attrs), attrs)
