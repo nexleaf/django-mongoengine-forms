@@ -2,7 +2,7 @@ import copy
 
 from django.forms.widgets import (Widget, Media, TextInput, FileInput,
                                   SplitDateTimeWidget, DateInput, TimeInput,
-                                  MultiWidget, HiddenInput)
+                                  MultiWidget, HiddenInput, CheckboxInput)
 from django.utils.safestring import mark_safe
 from django.core.validators import EMPTY_VALUES
 from django.forms.util import flatatt
