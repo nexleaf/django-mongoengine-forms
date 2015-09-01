@@ -32,7 +32,7 @@ try:  # objectid was moved into bson in pymongo 1.9
 except ImportError:
     from pymongo.errors import InvalidId
     
-from mongodbforms.widgets import ListWidget, MapWidget, HiddenMapWidget
+from mongodbforms.widgets import ListWidget, MapWidget, HiddenMapWidget, ListOfFilesWidget
 
 
 class MongoChoiceIterator(object):
@@ -398,3 +398,40 @@ class MapField(forms.Field):
             if self.contained_field._has_changed(init_val, v):
                 return True
         return False
+
+
+class ListOfFilesField(ListField):
+    widget = ListOfFilesWidget
+
+    def clean(self, value):
+        clean_data = []
+        errors = ErrorList()
+        if not value or isinstance(value, (list, tuple)):
+            if not value or not [
+                    v for v in value if v not in self.empty_values
+            ]:
+                if self.required:
+                    raise ValidationError(self.error_messages['required'])
+                else:
+                    return []
+            if not isinstance(value[0], (list, tuple)):
+                raise ValidationError(self.error_messages['invalid'])
+        else:
+            raise ValidationError(self.error_messages['invalid'])
+
+        for field_value, checkbox_value in value:
+            try:
+                clean_data.append([self.contained_field.clean(field_value), checkbox_value])
+            except ValidationError as e:
+                # Collect all validation errors in a single list, which we'll
+                # raise at the end of clean(), rather than raising a single
+                # exception for the first error we encounter.
+                errors.extend(e.messages)
+            if self.contained_field.required:
+                self.contained_field.required = False
+        if errors:
+            raise ValidationError(errors)
+
+        self.validate(clean_data)
+        self.run_validators(clean_data)
+        return clean_data
