@@ -9,7 +9,7 @@ from django.forms.widgets import media_property
 from django.core.exceptions import FieldError
 from django.core.validators import EMPTY_VALUES
 try:
-    from django.forms.utils import ErrorList
+    from django.forms.utils import ErrorList  # Django 1.8
 except ImportError:
     from django.forms.util import ErrorList
 from django.forms.formsets import BaseFormSet, formset_factory

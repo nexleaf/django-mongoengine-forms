@@ -6,7 +6,7 @@ from mongodbforms.documentoptions import DocumentMetaWrapper, LazyDocumentMetaWr
 from mongodbforms.fieldgenerator import MongoDefaultFormFieldGenerator
 
 try:
-    from django.utils.module_loading import import_string
+    from django.utils.module_loading import import_string  # Django 1.8
 except ImportError:
     from django.utils.module_loading import import_by_path as import_string
 

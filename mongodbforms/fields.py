@@ -25,7 +25,7 @@ except ImportError:
         
 from django.utils.translation import ugettext_lazy as _
 try:
-    from django.forms.utils import ErrorList
+    from django.forms.utils import ErrorList  # Django 1.8
 except ImportError:
     from django.forms.util import ErrorList
 from django.core.exceptions import ValidationError

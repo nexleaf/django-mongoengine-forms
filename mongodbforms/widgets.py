@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.core.validators import EMPTY_VALUES
 try:
-    from django.forms.utils import flatatt
+    from django.forms.utils import flatatt  # Django 1.8
 except ImportError:
     from django.forms.util import flatatt
 
