@@ -3,20 +3,23 @@
 from setuptools import setup, find_packages
 from subprocess import call
 
+
 def convert_readme():
     try:
-        call(["pandoc", "-f", "markdown_github", "-t",  "rst", "-o",  "README.txt", "readme.md"])
+        call(["pandoc", "-f", "markdown_github", "-t",
+              "rst", "-o",  "README.rst", "README.md"])
     except Exception:
         # If `pandoc` is not available
-        pass
-    return open('README.txt').read()
+        return open('README.md').read()
 
-setup(name='mongodbforms',
-    version='0.3',
+    return open('README.rst').read()
+
+setup(
+    name='django-mongoengine-forms',
+    version='0.4.0',
     description="An implementation of django forms using mongoengine.",
-    author='Jan Schrewe',
-    author_email='jan@schafproductions.com',
-    url='http://www.schafproductions.com/projects/django-mongodb-forms/',
+    author='Thom Wiggers',
+    author_email='thom@thomwiggers.nl',
     packages=find_packages(),
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -33,6 +36,10 @@ setup(name='mongodbforms',
     package_data={
         "mongodbforms": ['templates/mongodbforms/*', 'static/mongodbforms/*']
     },
+    provides=['mongodbforms'],
+    obsoletes=['mongodbforms'],
+    url='https://github.com/thomwiggers/django-mongoengine-forms/',
     zip_safe=False,
-    install_requires=['setuptools', 'django>=1.4', 'mongoengine>=0.8.3',],
+    install_requires=['setuptools', 'django>=1.9', 'mongoengine>=0.10.0'],
+    test_suite="tests",
 )

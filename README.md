@@ -1,11 +1,15 @@
-# django mongodbforms
+# Django mongoengine forms
 
-This is an implementation of django's model forms for mongoengine documents.
+This is an implementation of Django's model forms for mongoengine documents.
+
+This a fork of [Jan Schrewe's mongodbforms](https://github.com/jschrewe/django-mongodbforms), which had some issues with keeping stuff up to date and it also carried around the baggage of supporting ancient Django versions. This fork aims to get a much leaner version.
 
 ## Requirements
 
-  * Django >= 1.4
-  * [mongoengine](http://mongoengine.org/) >= 0.8.3
+  * Django >= 1.9
+  * [mongoengine](http://mongoengine.org/) >= 0.10.0
+
+Earlier versions may work, but we're currently not testing with those.
 
 ## Supported field types
 
@@ -65,7 +69,7 @@ form = MessageForm(parent_document=some_document, position=3, ...)
 
 ## Documentation
 
-In theory the documentation [Django's modelform](https://docs.djangoproject.com/en/dev/topics/forms/modelforms/) documentation should be all you need (except for one exception; read on). If you find a discrepancy between something that mongodbforms does and what Django's documentation says, you have most likely found a bug. Please [report it](https://github.com/jschrewe/django-mongodbforms/issues).
+In theory the documentation [Django's modelform](https://docs.djangoproject.com/en/dev/topics/forms/modelforms/) documentation should be all you need (except for one exception; read on). If you find a discrepancy between something that mongodbforms does and what Django's documentation says, you have most likely found a bug. Please [report it](https://github.com/thomwiggers/django-mongoengine-forms/issues).
 
 ### Form field generation
 

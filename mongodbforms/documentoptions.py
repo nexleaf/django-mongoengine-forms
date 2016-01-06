@@ -1,20 +1,12 @@
 import sys
 from collections import MutableMapping
 from types import MethodType
+import warnings
 
 from django.db.models.fields import FieldDoesNotExist
-from django.utils.text import capfirst
-
-try:
-    # New in Django 1.7+
-    from django.utils.text import camel_case_to_spaces
-except ImportError:
-    # Backwards compatibility
-    from django.db.models.options import get_verbose_name as camel_case_to_spaces
-
-from django.utils.functional import LazyObject
+from django.utils.functional import LazyObject, new_method_proxy
+from django.utils.text import capfirst, camel_case_to_spaces
 from django.conf import settings
-
 from mongoengine.fields import ReferenceField, ListField
 
 
@@ -42,7 +34,8 @@ class Relation(object):
 
     @property
     def to(self):
-        if not isinstance(self._to._meta, (DocumentMetaWrapper, LazyDocumentMetaWrapper)):
+        if not isinstance(self._to._meta,
+                          (DocumentMetaWrapper, LazyDocumentMetaWrapper)):
             self._to._meta = DocumentMetaWrapper(self._to)
         return self._to
 
@@ -82,31 +75,20 @@ class LazyDocumentMetaWrapper(LazyObject):
         self._wrapped = DocumentMetaWrapper(self._document, self._meta)
 
     def __setattr__(self, name, value):
-        if name in ["_document", "_meta",]:
+        if name in ["_document", "_meta", ]:
             object.__setattr__(self, name, value)
         else:
             super(LazyDocumentMetaWrapper, self).__setattr__(name, value)
 
-    def __dir__(self):
-        return self._wrapped.__dir__()
+    __len__ = new_method_proxy(len)
 
-    def __getitem__(self, key):
-        return self._wrapped.__getitem__(key)
-
-    def __setitem__(self, key, value):
-        return self._wrapped.__getitem__(key, value)
-
-    def __delitem__(self, key):
-        return self._wrapped.__delitem__(key)
-
-    def __len__(self):
-        return self._wrapped.__len__()
-
+    @new_method_proxy
     def __contains__(self, key):
-        return self._wrapped.__contains__(key)
+        return key in self
 
 
 class DocumentMetaWrapper(MutableMapping):
+
     """
     Used to store mongoengine's _meta dict to make the document admin
     as compatible as possible to django's meta class on models.
@@ -158,7 +140,7 @@ class DocumentMetaWrapper(MutableMapping):
         self._setup_document_fields()
         # Setup self.pk if the document has an id_field in it's meta
         # if it doesn't have one it's an embedded document
-        #if 'id_field' in self._meta:
+        # if 'id_field' in self._meta:
         #    self.pk_name = self._meta['id_field']
         self._init_pk()
 
@@ -172,7 +154,8 @@ class DocumentMetaWrapper(MutableMapping):
                     # FIXME: Probably broken in Django 1.7
                     f.rel = Relation(f.document_type)
                     f.is_relation = True
-                elif isinstance(f, ListField) and isinstance(f.field, ReferenceField):
+                elif (isinstance(f, ListField) and
+                      isinstance(f.field, ReferenceField)):
                     # FIXME: Probably broken in Django 1.7
                     f.field.rel = Relation(f.field.document_type)
                     f.field.is_relation = True
@@ -197,10 +180,13 @@ class DocumentMetaWrapper(MutableMapping):
                         else:
                             flat.append((choice, value))
                 f.flatchoices = flat
-            if isinstance(f, ReferenceField) and not \
-                    isinstance(f.document_type._meta, (DocumentMetaWrapper, LazyDocumentMetaWrapper)) and \
-                    self.document != f.document_type:
-                f.document_type._meta = LazyDocumentMetaWrapper(f.document_type)
+            if (isinstance(f, ReferenceField) and not
+                    isinstance(f.document_type._meta,
+                               (DocumentMetaWrapper,
+                                LazyDocumentMetaWrapper)) and
+                    self.document != f.document_type):
+                f.document_type._meta = LazyDocumentMetaWrapper(
+                    f.document_type)
             if not hasattr(f, 'auto_created'):
                 f.auto_created = False
 
@@ -221,7 +207,8 @@ class DocumentMetaWrapper(MutableMapping):
         def _get_pk_val(obj):
             return obj.pk
 
-        patch_document(_get_pk_val, self.document, False)  # document is a class...
+        # document is a class
+        patch_document(_get_pk_val, self.document, False)
 
         if pk_field is not None:
             self.pk.name = self.pk_name
@@ -230,7 +217,8 @@ class DocumentMetaWrapper(MutableMapping):
             self.pk.fake = True
             # this is used in the admin and used to determine if the admin
             # needs to add a hidden pk field. It does not for embedded fields.
-            # So we pretend to have an editable pk field and just ignore it otherwise
+            # So we pretend to have an editable pk field and just ignore it
+            # otherwise
             self.pk.editable = True
 
     @property
@@ -388,4 +376,8 @@ class DocumentMetaWrapper(MutableMapping):
         return []
 
     def iteritems(self):
+        warnings.warn("Use items() instead", DeprecationWarning)
+        return self.items()
+
+    def items(self):
         return iter(self._meta.items())
