@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
-from subprocess import call
+from subprocess import check_call
 
 
 def convert_readme():
     try:
-        call(["pandoc", "-f", "markdown_github", "-t",
+        check_call(["pandoc", "-f", "markdown_github", "-t",
               "rst", "-o",  "README.rst", "README.md"])
     except Exception:
         # If `pandoc` is not available
