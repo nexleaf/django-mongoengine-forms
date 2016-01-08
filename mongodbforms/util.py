@@ -1,29 +1,31 @@
 from collections import defaultdict
 
 from django.conf import settings
+from django.utils.module_loading import import_string as import_by_path
 
-from mongodbforms.documentoptions import DocumentMetaWrapper, LazyDocumentMetaWrapper
-from mongodbforms.fieldgenerator import MongoDefaultFormFieldGenerator
-
-try:
-    from django.utils.module_loading import import_string  # Django 1.8
-except ImportError:
-    from django.utils.module_loading import import_by_path as import_string
+from .documentoptions import DocumentMetaWrapper, LazyDocumentMetaWrapper
+from .fieldgenerator import MongoDefaultFormFieldGenerator
 
 
 def load_field_generator():
     if hasattr(settings, 'MONGODBFORMS_FIELDGENERATOR'):
-        return import_string(settings.MONGODBFORMS_FIELDGENERATOR)
+        return import_by_path(settings.MONGODBFORMS_FIELDGENERATOR)
     return MongoDefaultFormFieldGenerator
 
 
 def init_document_options(document):
-    if not isinstance(document._meta, (DocumentMetaWrapper, LazyDocumentMetaWrapper)):
+    if not isinstance(document._meta,
+                      (DocumentMetaWrapper, LazyDocumentMetaWrapper)):
         document._meta = DocumentMetaWrapper(document)
     # Workaround for Django 1.7+
-    document._deferred = False
-    # FIXME: Wrong implementation for Relations (https://github.com/django/django/blob/master/django/db/models/base.py#L601)
-    document.serializable_value = lambda self, field_name: self._meta.get_field(field_name)
+    document._deferred = False  # This means we've got all values
+
+    def serializable_value(self, field_name):
+        # FIXME: Wrong implementation for Relations
+        # (https://github.com/django/django/blob/master/django/db/models/base.py#L601)
+        return self._meta.get_field(field_name)
+    document.serializable_value = serializable_value
+
     return document
 
 
@@ -39,16 +41,16 @@ def format_mongo_validation_errors(validation_exception):
             value = ' '.join([generate_key(k) for k in value])
         if isinstance(value, dict):
             value = ' '.join([
-                generate_key(v, k) for k, v in value.iteritems()
+                generate_key(v, k) for k, v in value.items()
             ])
 
         results = "%s.%s" % (prefix, value) if prefix else value
         return results
 
     error_dict = defaultdict(list)
-    for k, v in validation_exception.to_dict().iteritems():
+    for k, v in validation_exception.to_dict().items():
         error_dict[generate_key(v)].append(k)
-    return ["%s: %s" % (k, v) for k, v in error_dict.iteritems()]
+    return ["%s: %s" % (k, v) for k, v in error_dict.items()]
 
 
 # Taken from six (https://pypi.python.org/pypi/six)
