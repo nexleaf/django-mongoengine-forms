@@ -148,16 +148,16 @@ class DocumentMetaWrapper(MutableMapping):
         for f in self.document._fields.values():
             # Yay, more glue. Django expects fields to have a couple attributes
             # at least in the admin, probably in more places.
-            if not hasattr(f, 'rel'):
+            if not hasattr(f, 'remote_field'):
                 # need a bit more for actual reference fields here
                 if isinstance(f, ReferenceField):
-                    # FIXME: Probably broken in Django 1.7
-                    f.rel = Relation(f.document_type)
+                    # FIXME: Probably broken in Django 1.7+ ; remote_field new in 1.9
+                    f.rel = f.remote_field = Relation(f.document_type)
                     f.is_relation = True
                 elif (isinstance(f, ListField) and
                       isinstance(f.field, ReferenceField)):
-                    # FIXME: Probably broken in Django 1.7
-                    f.field.rel = Relation(f.field.document_type)
+                    # FIXME: Probably broken in Django 1.7+ ; remote_field new in 1.9
+                    f.field.rel = f.field.remote_field = Relation(f.field.document_type)
                     f.field.is_relation = True
                 else:
                     f.many_to_many = None
@@ -166,8 +166,8 @@ class DocumentMetaWrapper(MutableMapping):
                     f.one_to_one = None
                     f.related_model = None
 
-                    # FIXME: No longer used in Django 1.7?
-                    f.rel = None
+                    # FIXME: No longer used in Django 1.7? ; remote_field new in 1.9
+                    f.rel = f.remote_field = None
                     f.is_relation = False
             if not hasattr(f, 'verbose_name') or f.verbose_name is None:
                 f.verbose_name = capfirst(create_verbose_name(f.name))
