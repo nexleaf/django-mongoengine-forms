@@ -100,6 +100,7 @@ class DocumentMetaWrapper(MutableMapping):
     pk_name = None
     _app_label = None
     model_name = None
+    model = None
     _verbose_name = None
     has_auto_field = False
     object_name = None
@@ -133,6 +134,7 @@ class DocumentMetaWrapper(MutableMapping):
         except AttributeError:
             self.object_name = self.document.__class__.__name__
 
+        self.model = document
         self.model_name = self.object_name.lower()
 
         # add the gluey stuff to the document and it's fields to make
@@ -230,6 +232,10 @@ class DocumentMetaWrapper(MutableMapping):
                 model_module = sys.modules[self.document.__module__]
                 self._app_label = model_module.__name__.split('.')[-2]
         return self._app_label
+
+    @property
+    def app_config(self):
+        return {'app_label': self.app_label}
 
     @property
     def verbose_name(self):
