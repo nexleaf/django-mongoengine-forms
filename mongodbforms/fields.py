@@ -444,3 +444,18 @@ class ListOfFilesField(ListField):
         self.validate(clean_data)
         self.run_validators(clean_data)
         return clean_data
+
+    def has_changed(self, initial, data):
+        """
+        Return True if this field's value has changed.
+
+        :param initial:            a list of File proxies
+        :param data:               a list of ("new_file_value", "to_delete") data
+        """
+        if len(data) > len(initial) and data[-1][0] is None and data[-1][1] is False:
+            data = data[:-1]  # extra form value
+
+        if len(data) != len(initial):
+            return True
+
+        return any(new_file_value or to_delete for new_file_value, to_delete in data)
