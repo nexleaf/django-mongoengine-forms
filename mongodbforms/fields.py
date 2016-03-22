@@ -132,6 +132,22 @@ class ReferenceField(forms.ChoiceField):
         result.empty_label = copy.deepcopy(self.empty_label)
         return result
 
+    def has_changed(self, initial, data):
+        """
+        Return True if the field value has changed.
+        It properly handles comparisons between Documents
+        and ids.
+        """
+        initial = initial if initial is not None else ""
+        data = data if data is not None else ""
+
+        try:
+            initial = str(initial.id)
+        except AttributeError:
+            pass
+
+        return initial != data
+
 
 class DocumentMultipleChoiceField(ReferenceField):
     """A MultipleChoiceField whose choices are a model QuerySet."""
@@ -428,3 +444,18 @@ class ListOfFilesField(ListField):
         self.validate(clean_data)
         self.run_validators(clean_data)
         return clean_data
+
+    def has_changed(self, initial, data):
+        """
+        Return True if this field's value has changed.
+
+        :param initial:            a list of File proxies
+        :param data:               a list of ("new_file_value", "to_delete") data
+        """
+        if len(data) > len(initial) and data[-1][0] is None and data[-1][1] is False:
+            data = data[:-1]  # extra form value
+
+        if len(data) != len(initial):
+            return True
+
+        return any(new_file_value or to_delete for new_file_value, to_delete in data)
