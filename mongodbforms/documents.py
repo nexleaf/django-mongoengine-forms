@@ -909,6 +909,11 @@ class EmbeddedDocumentFormSet(BaseDocumentFormSet):
         return form
 
     def save(self, commit=True):
+        # Django's `save` method for BaseModelFormSet defines the 3 next attributes and are used in the admin.
+        # Leave them empty, as objects are directly saved on the parent_document
+        self.changed_objects = []
+        self.deleted_objects = []
+        self.new_objects = []
         # Don't try to save the new documents. Embedded objects don't have
         # a save method anyway.
         objs = super(EmbeddedDocumentFormSet, self).save(commit=False)
