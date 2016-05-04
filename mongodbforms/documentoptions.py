@@ -258,6 +258,10 @@ class DocumentMetaWrapper(MutableMapping):
     def verbose_name_plural(self):
         return "%ss" % self.verbose_name
 
+    @property
+    def db_table(self):
+        return self._meta.get("collection", self.object_name.lower())
+
     def get_add_permission(self):
         return 'add_%s' % self.object_name.lower()
 
