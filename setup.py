@@ -2,7 +2,7 @@
 
 from subprocess import check_call, CalledProcessError
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 def convert_readme():
