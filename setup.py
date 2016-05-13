@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages
-from subprocess import check_call
+from subprocess import check_call, CalledProcessError
+
+from setuptools import setup
 
 
 def convert_readme():
     try:
         check_call(["pandoc", "-f", "markdown_github", "-t",
-              "rst", "-o",  "README.rst", "README.md"])
-    except Exception:
-        # If `pandoc` is not available
+                    "rst", "-o", "README.rst", "README.md"])
+    except (OSError, CalledProcessError):
         return open('README.md').read()
 
     return open('README.rst').read()
 
 setup(
     name='django-mongoengine-forms',
-    version='0.4.0.4',
+    version='0.4.1.1',
     description="An implementation of django forms using mongoengine.",
     author='Thom Wiggers',
     author_email='thom@thomwiggers.nl',
