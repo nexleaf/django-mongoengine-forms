@@ -147,6 +147,13 @@ class DocumentMetaWrapper(MutableMapping):
         self._init_pk()
 
     def _setup_document_fields(self):
+        def patch_field(field_to_patch):
+            field_to_patch.many_to_many = None
+            field_to_patch.many_to_one = None
+            field_to_patch.one_to_many = None
+            field_to_patch.one_to_one = None
+            field_to_patch.related_model = None
+
         for f in self.document._fields.values():
             # Yay, more glue. Django expects fields to have a couple attributes
             # at least in the admin, probably in more places.
@@ -156,17 +163,15 @@ class DocumentMetaWrapper(MutableMapping):
                     # FIXME: Probably broken in Django 1.7+ ; remote_field new in 1.9
                     f.rel = f.remote_field = Relation(f.document_type)
                     f.is_relation = True
+                    patch_field(f)
                 elif (isinstance(f, ListField) and
                       isinstance(f.field, ReferenceField)):
                     # FIXME: Probably broken in Django 1.7+ ; remote_field new in 1.9
                     f.field.rel = f.field.remote_field = Relation(f.field.document_type)
                     f.field.is_relation = True
+                    patch_field(f.field)
                 else:
-                    f.many_to_many = None
-                    f.many_to_one = None
-                    f.one_to_many = None
-                    f.one_to_one = None
-                    f.related_model = None
+                    patch_field(f)
 
                     # FIXME: No longer used in Django 1.7? ; remote_field new in 1.9
                     f.rel = f.remote_field = None
