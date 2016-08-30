@@ -114,6 +114,7 @@ class DocumentMetaWrapper(MutableMapping):
     concrete_model = None
     concrete_managers = []
     virtual_fields = []
+    private_fields = []
     auto_created = False
 
     def __init__(self, document, meta=None):
