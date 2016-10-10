@@ -3,6 +3,7 @@ from collections import MutableMapping
 from types import MethodType
 import warnings
 
+from django.apps import apps
 from django.db.models.fields import FieldDoesNotExist
 from django.utils.functional import LazyObject, new_method_proxy
 from django.utils.text import capfirst, camel_case_to_spaces
@@ -98,9 +99,9 @@ class DocumentMetaWrapper(MutableMapping):
 
     pk = None
     pk_name = None
-    _app_label = None
     model_name = None
     model = None
+    _app_config = None
     _verbose_name = None
     has_auto_field = False
     object_name = None
@@ -231,17 +232,13 @@ class DocumentMetaWrapper(MutableMapping):
 
     @property
     def app_label(self):
-        if self._app_label is None:
-            if self._meta.get('app_label'):
-                self._app_label = self._meta["app_label"]
-            else:
-                model_module = sys.modules[self.document.__module__]
-                self._app_label = model_module.__name__.split('.')[-2]
-        return self._app_label
+        return self.app_config.label
 
     @property
     def app_config(self):
-        return {'app_label': self.app_label}
+        if not self._app_config:
+            self._app_config = apps.get_containing_app_config(self.model.__module__)
+        return self._app_config
 
     @property
     def verbose_name(self):
