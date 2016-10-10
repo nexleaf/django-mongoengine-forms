@@ -101,6 +101,7 @@ class DocumentMetaWrapper(MutableMapping):
     pk_name = None
     model_name = None
     model = None
+    _app_config = None
     _verbose_name = None
     has_auto_field = False
     object_name = None
@@ -137,7 +138,6 @@ class DocumentMetaWrapper(MutableMapping):
 
         self.model = document
         self.model_name = self.object_name.lower()
-        self.app_config = apps.get_containing_app_config(self.model.__module__)
 
         # add the gluey stuff to the document and it's fields to make
         # everything play nice with Django
@@ -232,7 +232,13 @@ class DocumentMetaWrapper(MutableMapping):
 
     @property
     def app_label(self):
-        self.app_config.label
+        return self.app_config.label
+
+    @property
+    def app_config(self):
+        if not self._app_config:
+            self._app_config = apps.get_containing_app_config(self.model.__module__)
+        return self._app_config
 
     @property
     def verbose_name(self):
