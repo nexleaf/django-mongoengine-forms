@@ -103,6 +103,7 @@ class DocumentMetaWrapper(MutableMapping):
     model = None
     _app_config = None
     _verbose_name = None
+    _verbose_name_plural = None
     has_auto_field = False
     object_name = None
     proxy = []
@@ -259,7 +260,9 @@ class DocumentMetaWrapper(MutableMapping):
 
     @property
     def verbose_name_plural(self):
-        return "%ss" % self.verbose_name
+        if self._verbose_name_plural is None:
+            self._verbose_name_plural = self._meta.get('verbose_name_plural') or "{}s".format(self.verbose_name)
+        return self._verbose_name_plural
 
     @property
     def db_table(self):
