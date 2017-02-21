@@ -628,6 +628,8 @@ class EmbeddedDocumentForm(with_metaclass(DocumentFormMetaclass,
                     (i for i, obj in enumerate(emb_list) if obj == instance),
                     None
                 )
+        elif instance is None:
+            instance = getattr(parent_document, self._meta.embedded_field)
 
         super(EmbeddedDocumentForm, self).__init__(data=data, files=files,
                                                    instance=instance, *args,
