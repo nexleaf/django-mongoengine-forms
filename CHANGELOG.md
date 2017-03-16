@@ -1,6 +1,18 @@
 Changelog
 =========
 
+Version 0.4.3
+-------------
+
+* Bug: fix 'Field assigned before declaration' error (PR #8)
+* Fix MongoEngine 0.11.0 compatibility by importing errors from `mongoengine.errors` (#9)
+
+Version 0.4.2
+-------------
+
+* Bug: Can't customise widget. (PR #6)
+* Bug: `BaseDocumentForm` should instantiate new document if `instance=None` (PR #7)
+
 Version 0.4.1
 -------------
 
