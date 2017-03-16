@@ -14,9 +14,10 @@ def convert_readme():
 
     return open('README.rst').read()
 
+
 setup(
     name='django-mongoengine-forms',
-    version='0.4.1.10',
+    version='0.4.3.1',
     description="An implementation of django forms using mongoengine.",
     author='Thom Wiggers',
     author_email='thom@thomwiggers.nl',
