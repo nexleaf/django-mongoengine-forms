@@ -3,8 +3,9 @@ import itertools
 from collections import Callable, OrderedDict
 from functools import reduce
 
-from django.forms.forms import (BaseForm, DeclarativeFieldsMetaclass,
+from django.forms.forms import (DeclarativeFieldsMetaclass,
                                 NON_FIELD_ERRORS, pretty_name)
+from django.forms.models import BaseModelForm
 from django.forms.widgets import media_property
 from django.core.exceptions import FieldError
 from django.core.validators import EMPTY_VALUES
@@ -357,7 +358,7 @@ class DocumentFormMetaclass(DeclarativeFieldsMetaclass):
         return new_class
 
 
-class BaseDocumentForm(BaseForm):
+class BaseDocumentForm(BaseModelForm):
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=':',
@@ -384,7 +385,8 @@ class BaseDocumentForm(BaseForm):
         # It is False by default so overriding self.clean() and failing to call
         # super will stop validate_unique from being called.
         self._validate_unique = False
-        super(BaseDocumentForm, self).__init__(
+        # Skip the call to BaseModelForm.__init__ as this method aims to replace it
+        super(BaseModelForm, self).__init__(
             data, files, auto_id, prefix, object_data, error_class,
             label_suffix, empty_permitted, field_order, use_required_attribute
         )
