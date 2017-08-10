@@ -17,7 +17,7 @@ def convert_readme():
 
 setup(
     name='django-mongoengine-forms',
-    version='0.4.3.1',
+    version='0.4.4',
     description="An implementation of django forms using mongoengine.",
     author='Thom Wiggers',
     author_email='thom@thomwiggers.nl',
@@ -41,6 +41,6 @@ setup(
     obsoletes=['mongodbforms'],
     url='https://github.com/thomwiggers/django-mongoengine-forms/',
     zip_safe=False,
-    install_requires=['setuptools', 'django>=1.8', 'mongoengine>=0.8.8'],
+    install_requires=['setuptools', 'django>=1.8', 'mongoengine>=0.10'],
     test_suite="tests",
 )
