@@ -3,8 +3,9 @@ import itertools
 from collections import Callable, OrderedDict
 from functools import reduce
 
-from django.forms.forms import (BaseForm, DeclarativeFieldsMetaclass,
+from django.forms.forms import (DeclarativeFieldsMetaclass,
                                 NON_FIELD_ERRORS, pretty_name)
+from django.forms.models import BaseModelForm
 from django.forms.widgets import media_property
 from django.core.exceptions import FieldError
 from django.core.validators import EMPTY_VALUES
@@ -115,7 +116,21 @@ def construct_instance(form, instance, fields=None, exclude=None):
         elif isinstance(f, ListField):
             list_field = getattr(instance, f.name)
             uploads = cleaned_data[f.name]
+            idx_to_pop = []
             for i, uploaded_file in enumerate(uploads):
+                if isinstance(uploaded_file, list):  # ListOfFilesWidget
+                    uploaded_file, to_delete = uploaded_file
+                    if to_delete:
+                        try:
+                            list_field[i].delete()
+                            idx_to_pop.append(i)
+                        except IndexError:
+                            # someone checked the delete box of the last
+                            # form item, which obviously doesnt exist
+                            # on the list
+                            pass
+                        continue
+
                 if uploaded_file is None:
                     continue
                 try:
@@ -128,6 +143,10 @@ def construct_instance(form, instance, fields=None, exclude=None):
                     list_field[i] = file_obj
                 except IndexError:
                     list_field.append(file_obj)
+
+            for idx in reversed(idx_to_pop):
+                del list_field[idx]
+
             setattr(instance, f.name, list_field)
         else:
             field = getattr(instance, f.name)
@@ -339,11 +358,12 @@ class DocumentFormMetaclass(DeclarativeFieldsMetaclass):
         return new_class
 
 
-class BaseDocumentForm(BaseForm):
+class BaseDocumentForm(BaseModelForm):
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=':',
-                 empty_permitted=False, instance=None):
+                 empty_permitted=False, instance=None,
+                 field_order=None, use_required_attribute=None):
 
         opts = self._meta
 
@@ -365,9 +385,11 @@ class BaseDocumentForm(BaseForm):
         # It is False by default so overriding self.clean() and failing to call
         # super will stop validate_unique from being called.
         self._validate_unique = False
-        super(BaseDocumentForm, self).__init__(data, files, auto_id, prefix,
-                                               object_data, error_class,
-                                               label_suffix, empty_permitted)
+        # Skip the call to BaseModelForm.__init__ as this method aims to replace it
+        super(BaseModelForm, self).__init__(
+            data, files, auto_id, prefix, object_data, error_class,
+            label_suffix, empty_permitted, field_order, use_required_attribute
+        )
 
     def _update_errors(self, message_dict):
         for k, v in list(message_dict.items()):
@@ -609,6 +631,8 @@ class EmbeddedDocumentForm(with_metaclass(DocumentFormMetaclass,
                     (i for i, obj in enumerate(emb_list) if obj == instance),
                     None
                 )
+        elif instance is None:
+            instance = getattr(parent_document, self._meta.embedded_field)
 
         super(EmbeddedDocumentForm, self).__init__(data=data, files=files,
                                                    instance=instance, *args,
@@ -892,6 +916,11 @@ class EmbeddedDocumentFormSet(BaseDocumentFormSet):
         return form
 
     def save(self, commit=True):
+        # Django's `save` method for BaseModelFormSet defines the 3 next attributes and are used in the admin.
+        # Leave them empty, as objects are directly saved on the parent_document
+        self.changed_objects = []
+        self.deleted_objects = []
+        self.new_objects = []
         # Don't try to save the new documents. Embedded objects don't have
         # a save method anyway.
         objs = super(EmbeddedDocumentFormSet, self).save(commit=False)

@@ -19,7 +19,7 @@ from django.core.exceptions import ValidationError
 
 from bson.errors import InvalidId
 
-from .widgets import ListWidget, MapWidget, HiddenMapWidget
+from .widgets import ListWidget, MapWidget, HiddenMapWidget, ListOfFilesWidget
 
 
 class MongoChoiceIterator(object):
@@ -131,6 +131,22 @@ class ReferenceField(forms.ChoiceField):
         result.queryset = self.queryset  # self.queryset calls clone()
         result.empty_label = copy.deepcopy(self.empty_label)
         return result
+
+    def has_changed(self, initial, data):
+        """
+        Return True if the field value has changed.
+        It properly handles comparisons between Documents
+        and ids.
+        """
+        initial = initial if initial is not None else ""
+        data = data if data is not None else ""
+
+        try:
+            initial = str(initial.id)
+        except AttributeError:
+            pass
+
+        return initial != data
 
 
 class DocumentMultipleChoiceField(ReferenceField):
@@ -397,3 +413,53 @@ class MapField(forms.Field):
             if self.contained_field.has_changed(init_val, v):
                 return True
         return False
+
+
+class ListOfFilesField(ListField):
+    widget = ListOfFilesWidget
+
+    def clean(self, value):
+        """
+        We clean every subwidget.
+        """
+        clean_data = []
+        errors = ErrorList()
+        is_empty = not value or not [v for v in value if v not in self.empty_values]
+        if is_empty and not self.required:
+            return []
+
+        if is_empty and self.required:
+            raise ValidationError(self.error_messages['required'])
+
+        if value and not isinstance(value, (list, tuple)):
+            raise ValidationError(self.error_messages['invalid'])
+
+        for field_value, checkbox_value in value:
+            try:
+                clean_data.append([self.contained_field.clean(field_value), checkbox_value])
+            except ValidationError as e:
+                errors.extend(e.messages)
+            # FIXME: copy paste from above
+            if self.contained_field.required:
+                self.contained_field.required = False
+        if errors:
+            raise ValidationError(errors)
+
+        self.validate(clean_data)
+        self.run_validators(clean_data)
+        return clean_data
+
+    def has_changed(self, initial, data):
+        """
+        Return True if this field's value has changed.
+
+        :param initial:            a list of File proxies
+        :param data:               a list of ("new_file_value", "to_delete") data
+        """
+        if len(data) > len(initial) and data[-1][0] is None and data[-1][1] is False:
+            data = data[:-1]  # extra form value
+
+        if len(data) != len(initial):
+            return True
+
+        return any(new_file_value or to_delete for new_file_value, to_delete in data)

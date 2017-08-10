@@ -1,8 +1,9 @@
 import copy
 
-from django.forms.widgets import (Widget, Media, TextInput,
+from django.forms.widgets import (Widget, Media, TextInput, FileInput,
                                   SplitDateTimeWidget, DateInput, TimeInput,
-                                  MultiWidget, HiddenInput)
+                                  MultiWidget, HiddenInput, CheckboxInput)
+from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.core.validators import EMPTY_VALUES
 from django.forms.utils import flatatt
@@ -59,6 +60,8 @@ class BaseContainerWidget(Widget):
 
 
 class ListWidget(BaseContainerWidget):
+    template = "mongodbforms/list_widget.html"
+
     def render(self, name, value, attrs=None):
         if value is not None and not isinstance(value, (list, tuple)):
             raise TypeError(
@@ -77,6 +80,16 @@ class ListWidget(BaseContainerWidget):
                 name + '_%s' % i, widget_value, final_attrs)
             )
         return mark_safe(self.format_output(output))
+
+    def format_output(self, rendered_widgets):
+        """
+        Given a list of rendered widgets (as strings), returns a Unicode string
+        representing the HTML for the whole lot.
+
+        This hook allows you to format the HTML design of the widgets, if
+        needed.
+        """
+        return render_to_string(self.template, {"widgets": rendered_widgets})
 
     def value_from_datadict(self, data, files, name):
         widget = self.data_widget
@@ -177,3 +190,47 @@ class HiddenMapWidget(MapWidget):
         data_widget = HiddenInput()
         super(MapWidget, self).__init__(data_widget, attrs)
         self.key_widget = HiddenInput()
+
+
+class DeletableFileWidget(MultiWidget):
+
+    default_delete_label = "Delete this file."
+
+    def __init__(self, file_widget=FileInput, attrs=None, delete_label=None):
+        widgets = [file_widget, CheckboxInput]
+        self.delete_label = delete_label or self.default_delete_label
+        super(DeletableFileWidget, self).__init__(widgets, attrs)
+
+    def decompress(self, value):
+        return [value, False]
+
+    def value_from_datadict(self, data, files, name):
+        filename = name + '_0'
+        if filename not in data and filename not in files:
+            return None
+        return super(DeletableFileWidget, self).value_from_datadict(data, files, name)
+
+    def format_output(self, rendered_widgets):
+        label = "<label>%s</label>" % self.delete_label
+        return super(DeletableFileWidget, self).format_output(rendered_widgets) + label
+
+
+class ListOfFilesWidget(ListWidget):
+    template = "mongodbforms/list_of_files_widget.html"
+
+    class Media:
+        js = ('mongodbforms/list_of_files_widget.js', )
+
+    def __init__(self, contained_widget=None, attrs=None, delete_label=None):
+        super(ListOfFilesWidget, self).__init__(DeletableFileWidget(contained_widget, attrs, delete_label), attrs)
+
+    def value_from_datadict(self, data, files, name):
+        widget = self.data_widget
+        i = 0
+        ret = []
+        value = widget.value_from_datadict(data, files, name + '_%s' % i)
+        while value is not None:
+            ret.append(value)
+            i = i + 1
+            value = widget.value_from_datadict(data, files, name + '_%s' % i)
+        return ret

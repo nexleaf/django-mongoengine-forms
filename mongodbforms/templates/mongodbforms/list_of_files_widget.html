@@ -1,0 +1,9 @@
+<ul>
+  {% for widget in widgets %}
+  {% if forloop.last %}
+  <li class="js-widget-item js-widget-last-item">{{ widget|safe }}</li>
+  {% else %}
+  <li class="js-widget-item">{{ widget|safe }}</li>
+  {% endif %}
+  {% endfor %}
+</ul>

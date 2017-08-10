@@ -3,6 +3,7 @@ from collections import MutableMapping
 from types import MethodType
 import warnings
 
+from django.apps import apps
 from django.db.models.fields import FieldDoesNotExist
 from django.utils.functional import LazyObject, new_method_proxy
 from django.utils.text import capfirst, camel_case_to_spaces
@@ -98,9 +99,11 @@ class DocumentMetaWrapper(MutableMapping):
 
     pk = None
     pk_name = None
-    _app_label = None
     model_name = None
+    model = None
+    _app_config = None
     _verbose_name = None
+    _verbose_name_plural = None
     has_auto_field = False
     object_name = None
     proxy = []
@@ -113,6 +116,7 @@ class DocumentMetaWrapper(MutableMapping):
     concrete_model = None
     concrete_managers = []
     virtual_fields = []
+    private_fields = []
     auto_created = False
 
     def __init__(self, document, meta=None):
@@ -133,6 +137,7 @@ class DocumentMetaWrapper(MutableMapping):
         except AttributeError:
             self.object_name = self.document.__class__.__name__
 
+        self.model = document
         self.model_name = self.object_name.lower()
 
         # add the gluey stuff to the document and it's fields to make
@@ -145,29 +150,34 @@ class DocumentMetaWrapper(MutableMapping):
         self._init_pk()
 
     def _setup_document_fields(self):
+        def patch_field(field_to_patch):
+            field_to_patch.many_to_many = None
+            field_to_patch.many_to_one = None
+            field_to_patch.one_to_many = None
+            field_to_patch.one_to_one = None
+            field_to_patch.related_model = None
+
         for f in self.document._fields.values():
             # Yay, more glue. Django expects fields to have a couple attributes
             # at least in the admin, probably in more places.
-            if not hasattr(f, 'rel'):
+            if not hasattr(f, 'remote_field'):
                 # need a bit more for actual reference fields here
                 if isinstance(f, ReferenceField):
-                    # FIXME: Probably broken in Django 1.7
-                    f.rel = Relation(f.document_type)
+                    # FIXME: Probably broken in Django 1.7+ ; remote_field new in 1.9
+                    f.rel = f.remote_field = Relation(f.document_type)
                     f.is_relation = True
+                    patch_field(f)
                 elif (isinstance(f, ListField) and
                       isinstance(f.field, ReferenceField)):
-                    # FIXME: Probably broken in Django 1.7
-                    f.field.rel = Relation(f.field.document_type)
+                    # FIXME: Probably broken in Django 1.7+ ; remote_field new in 1.9
+                    f.field.rel = f.field.remote_field = Relation(f.field.document_type)
                     f.field.is_relation = True
+                    patch_field(f.field)
                 else:
-                    f.many_to_many = None
-                    f.many_to_one = None
-                    f.one_to_many = None
-                    f.one_to_one = None
-                    f.related_model = None
+                    patch_field(f)
 
-                    # FIXME: No longer used in Django 1.7?
-                    f.rel = None
+                    # FIXME: No longer used in Django 1.7? ; remote_field new in 1.9
+                    f.rel = f.remote_field = None
                     f.is_relation = False
             if not hasattr(f, 'verbose_name') or f.verbose_name is None:
                 f.verbose_name = capfirst(create_verbose_name(f.name))
@@ -223,13 +233,13 @@ class DocumentMetaWrapper(MutableMapping):
 
     @property
     def app_label(self):
-        if self._app_label is None:
-            if self._meta.get('app_label'):
-                self._app_label = self._meta["app_label"]
-            else:
-                model_module = sys.modules[self.document.__module__]
-                self._app_label = model_module.__name__.split('.')[-2]
-        return self._app_label
+        return self.app_config.label
+
+    @property
+    def app_config(self):
+        if not self._app_config:
+            self._app_config = apps.get_containing_app_config(self.model.__module__)
+        return self._app_config
 
     @property
     def verbose_name(self):
@@ -250,7 +260,13 @@ class DocumentMetaWrapper(MutableMapping):
 
     @property
     def verbose_name_plural(self):
-        return "%ss" % self.verbose_name
+        if self._verbose_name_plural is None:
+            self._verbose_name_plural = self._meta.get('verbose_name_plural') or "{}s".format(self.verbose_name)
+        return self._verbose_name_plural
+
+    @property
+    def db_table(self):
+        return self._meta.get("collection", self.object_name.lower())
 
     def get_add_permission(self):
         return 'add_%s' % self.object_name.lower()

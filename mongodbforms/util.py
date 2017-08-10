@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from bson import ObjectId
 from django.conf import settings
 from django.utils.module_loading import import_string as import_by_path
 
@@ -23,7 +24,8 @@ def init_document_options(document):
     def serializable_value(self, field_name):
         # FIXME: Wrong implementation for Relations
         # (https://github.com/django/django/blob/master/django/db/models/base.py#L601)
-        return self._meta.get_field(field_name)
+        value = getattr(self, field_name)
+        return str(value) if isinstance(value, ObjectId) else value
     document.serializable_value = serializable_value
 
     return document
