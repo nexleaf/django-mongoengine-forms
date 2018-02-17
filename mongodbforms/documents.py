@@ -366,7 +366,10 @@ class BaseDocumentForm(BaseForm):
             object_data = {}
         else:
             self.instance = instance
-            object_data = document_to_dict(instance, opts.fields, opts.exclude)
+            transform = getattr(
+                opts, 'init_from_document', document_to_dict)
+
+            object_data = transform(instance, opts.fields, opts.exclude)
 
         # if initial was provided, it should override the values from instance
         if initial is not None:
