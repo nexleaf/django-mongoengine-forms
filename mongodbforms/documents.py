@@ -5,7 +5,7 @@ from collections import OrderedDict
 from functools import reduce
 
 from django.forms.forms import (BaseForm, DeclarativeFieldsMetaclass,
-                                NON_FIELD_ERRORS, pretty_name)
+                                NON_FIELD_ERRORS)
 from django.forms.widgets import media_property
 from django.core.exceptions import FieldError
 from django.core.validators import EMPTY_VALUES
@@ -32,6 +32,11 @@ try:
     from collections.abc import Callable
 except ImportError:
     from collections import Callable
+
+try:
+    from django.forms.utils import pretty_name
+except ImportError:
+    from django.forms.forms import pretty_name
 
 
 _fieldgenerator = None

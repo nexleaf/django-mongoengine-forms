@@ -3,7 +3,6 @@ import warnings
 
 from types import MethodType
 
-from django.db.models.fields import FieldDoesNotExist
 from django.utils.functional import LazyObject, new_method_proxy
 from django.utils.text import capfirst, camel_case_to_spaces
 from django.conf import settings
@@ -14,6 +13,10 @@ try:
 except ImportError:
     from collections import MutableMapping
 
+try:
+    from django.core.exceptions import FieldDoesNotExist
+except ImportError:
+    from django.db.models.fields import FieldDoesNotExist
 
 def patch_document(function, instance, bound=True):
     if bound:
