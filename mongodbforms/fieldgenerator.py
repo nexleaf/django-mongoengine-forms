@@ -6,7 +6,6 @@ Wilson Júnior (wilsonpjunior@gmail.com).
 """
 from django import forms
 from django.core.validators import EMPTY_VALUES, RegexValidator
-from django.utils.encoding import smart_text as smart_unicode
 from django.utils.text import capfirst
 from mongoengine import (ReferenceField as MongoReferenceField,
                          EmbeddedDocumentField as MongoEmbeddedDocumentField,
@@ -25,6 +24,11 @@ try:
     from collections.abc import Callable
 except ImportError:
     from collections import Callable
+
+try:
+    from django.utils.encoding import smart_unicode as smart_str
+except ImportError:
+    from django.utils.encoding import smart_str
 
 
 class MongoFormFieldGenerator(object):
@@ -116,7 +120,7 @@ class MongoFormFieldGenerator(object):
     def string_field(self, value):
         if value in EMPTY_VALUES:
             return None
-        return smart_unicode(value)
+        return smart_str(value)
 
     def integer_field(self, value):
         if value in EMPTY_VALUES:

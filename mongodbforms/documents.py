@@ -4,6 +4,7 @@ import itertools
 from collections import OrderedDict
 from functools import reduce
 
+from django import VERSION as DJANGO_VERSION
 from django.forms.forms import (BaseForm, DeclarativeFieldsMetaclass,
                                 NON_FIELD_ERRORS)
 from django.forms.widgets import media_property
@@ -11,7 +12,6 @@ from django.core.exceptions import FieldError
 from django.core.validators import EMPTY_VALUES
 from django.forms.utils import ErrorList
 from django.forms.formsets import BaseFormSet, formset_factory
-from django.utils.translation import ugettext_lazy as _, ugettext
 from django.utils.text import capfirst, get_valid_filename
 
 from mongoengine.fields import (ObjectIdField, ListField, ReferenceField,
@@ -37,6 +37,14 @@ try:
     from django.forms.utils import pretty_name
 except ImportError:
     from django.forms.forms import pretty_name
+
+if DJANGO_VERSION >= (2, 0):
+    from django.utils.translation import gettext_lazy as _, gettext
+else:
+    from django.utils.translation import (
+        ugettext_lazy as _,
+        ugettext as gettext,
+    )
 
 
 _fieldgenerator = None
@@ -755,16 +763,16 @@ class BaseDocumentFormSet(BaseFormSet):
             raise ValidationError(errors)
 
     def get_date_error_message(self, date_check):
-        return ugettext("Please correct the duplicate data for %(field_name)s "
-                        "which must be unique for the %(lookup)s "
-                        "in %(date_field)s.") % {
+        return gettext("Please correct the duplicate data for %(field_name)s "
+                       "which must be unique for the %(lookup)s "
+                       "in %(date_field)s.") % {
             'field_name': date_check[2],
             'date_field': date_check[3],
             'lookup': str(date_check[1]),
         }
 
     def get_form_error(self):
-        return ugettext("Please correct the duplicate values below.")
+        return gettext("Please correct the duplicate values below.")
 
 
 def documentformset_factory(document, form=DocumentForm,

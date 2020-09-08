@@ -7,13 +7,10 @@ Wilson Júnior (wilsonpjunior@gmail.com).
 import copy
 import warnings
 
-from django import forms
+from django import forms, VERSION as DJANGO_VERSION
 from django.core.validators import (EMPTY_VALUES, MinLengthValidator,
                                     MaxLengthValidator)
 
-from django.utils.encoding import (force_text as force_unicode,
-                                   smart_text as smart_unicode)
-from django.utils.translation import ugettext_lazy as _
 from django.forms.utils import ErrorList
 from django.core.exceptions import ValidationError
 
@@ -23,6 +20,19 @@ from mongoengine.errors import ValidationError as MongoValidationError
 
 from .widgets import (HiddenMapWidget, LazySelect, LazySelectMultiple,
                       ListWidget, MapWidget)
+
+try:
+    from django.utils.encoding import (
+        force_unicode as force_str,
+        smart_unicode as smart_str,
+    )
+except ImportError:
+    from django.utils.encoding import force_str, smart_str
+
+if DJANGO_VERSION >= (2, 0):
+    from django.utils.translation import gettext_lazy as _
+else:
+    from django.utils.translation import ugettext_lazy as _
 
 
 class MongoChoiceIterator(object):
@@ -84,7 +94,7 @@ class ReferenceField(forms.ChoiceField):
             self,
             queryset,
             empty_label="---------",
-            label_formatter=smart_unicode,
+            label_formatter=smart_str,
             **kwargs):
         # skip choice initialization in forms.ChoiceField.__init__
         forms.Field.__init__(self, **kwargs)
@@ -178,9 +188,9 @@ class DocumentMultipleChoiceField(ReferenceField):
             raise forms.ValidationError(
                 self.error_messages['invalid_pk_value'] % str(value)
             )
-        pks = set([force_unicode(getattr(o, 'pk')) for o in qs])
+        pks = set([force_str(getattr(o, 'pk')) for o in qs])
         for val in value:
-            if force_unicode(val) not in pks:
+            if force_str(val) not in pks:
                 raise forms.ValidationError(
                     self.error_messages['invalid_choice'] % val
                 )
